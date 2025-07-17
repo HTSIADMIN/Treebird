@@ -1,0 +1,86 @@
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// Bird
+const bird = {
+  x: 50,
+  y: 150,
+  width: 20,
+  height: 20,
+  gravity: 0.6,
+  lift: -10,
+  velocity: 0
+};
+
+// Pipes
+let pipes = [];
+let pipeGap = 120;
+let frame = 0;
+let score = 0;
+
+// Control
+document.addEventListener("keydown", () => {
+  bird.velocity = bird.lift;
+});
+
+// Game loop
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Bird
+  bird.velocity += bird.gravity;
+  bird.y += bird.velocity;
+  if (bird.y + bird.height > canvas.height || bird.y < 0) {
+    resetGame();
+  }
+
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+
+  // Pipes
+  if (frame % 90 === 0) {
+    const topHeight = Math.random() * (canvas.height - pipeGap - 100);
+    pipes.push({ x: canvas.width, top: topHeight, bottom: topHeight + pipeGap });
+  }
+
+  pipes.forEach((pipe, i) => {
+    pipe.x -= 2;
+
+    // Collision
+    if (
+      bird.x < pipe.x + 40 &&
+      bird.x + bird.width > pipe.x &&
+      (bird.y < pipe.top || bird.y + bird.height > pipe.bottom)
+    ) {
+      resetGame();
+    }
+
+    // Score
+    if (pipe.x + 40 === bird.x) score++;
+
+    ctx.fillStyle = "green";
+    ctx.fillRect(pipe.x, 0, 40, pipe.top);
+    ctx.fillRect(pipe.x, pipe.bottom, 40, canvas.height - pipe.bottom);
+  });
+
+  // Remove off-screen pipes
+  pipes = pipes.filter(p => p.x + 40 > 0);
+
+  // Score display
+  ctx.fillStyle = "black";
+  ctx.font = "20px Arial";
+  ctx.fillText("Score: " + score, 10, 25);
+
+  frame++;
+  requestAnimationFrame(draw);
+}
+
+function resetGame() {
+  bird.y = 150;
+  bird.velocity = 0;
+  pipes = [];
+  score = 0;
+  frame = 0;
+}
+
+draw();
